@@ -1,0 +1,2 @@
+curl-cffi>=0.5.7
+scrapy>=2.10.1
