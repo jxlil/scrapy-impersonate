@@ -8,7 +8,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="scrapy-impersonate",
-    version="1.0.0b1",
+    version="1.0.1b1",
     author="Jalil SA (jxlil)",
     description="Scrapy download handler that can impersonate browser fingerprints",
     license="MIT",
