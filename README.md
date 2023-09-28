@@ -1,4 +1,5 @@
 # scrapy-impersonate
+[![version](https://img.shields.io/pypi/v/scrapy-impersonate.svg)](https://pypi.python.org/pypi/scrapy-impersonate)
 
 `scrapy-impersonate` is a Scrapy download handler. This project integrates [curl_cffi](https://github.com/yifeikong/curl_cffi) to perform HTTP requests, so it can impersonate browsers' TLS signatures or JA3 fingerprints.
 
