@@ -6,7 +6,7 @@
 ## Installation
 
 ```
-pip install git+http://github.com/jxlil/scrapy-impersonate
+pip install scrapy-impersonate
 ```
 
 ## Activation
