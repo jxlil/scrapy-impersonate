@@ -62,7 +62,10 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
             request=request,
         )
 
+    def close(self):
+        yield super().close()
+        yield self._close()
+
     @deferred_f_from_coro_f
-    async def close(self):
+    async def _close(self) -> None:
         await self.client.__aexit__()  # type: ignore
-        await super().close()
