@@ -1,5 +1,5 @@
 import base64
-from typing import Union
+from typing import Optional, Tuple, Union
 from urllib.parse import urlparse
 
 from scrapy.http import Request
@@ -8,6 +8,7 @@ from scrapy.http import Request
 class RequestParser:
     def __init__(self, request: Request) -> None:
         self._request = request
+        self._impersonate_args = request.meta.get("impersonate_args", {})
 
     @property
     def url(self) -> str:
@@ -66,6 +67,34 @@ class RequestParser:
     @property
     def impersonate(self) -> Union[str, None]:
         return self._request.meta.get("impersonate")
+
+    @property
+    def params(self) -> Optional[dict]:
+        return self._impersonate_args.get("params")
+
+    @property
+    def json(self) -> Optional[dict]:
+        return self._impersonate_args.get("json")
+
+    @property
+    def auth(self) -> Optional[Tuple[str, str]]:
+        return self._impersonate_args.get("auth")
+
+    @property
+    def timeout(self) -> Union[float, Tuple[float, float]]:
+        return self._impersonate_args.get("timeout", 30)
+
+    @property
+    def max_redirects(self) -> int:
+        return self._impersonate_args.get("max_redirects", -1)
+
+    @property
+    def verify(self) -> Optional[bool]:
+        return self._impersonate_args.get("verify")
+
+    @property
+    def thread(self) -> Optional[str]:
+        return self._impersonate_args.get("thread")
 
     def as_dict(self) -> dict:
         return {
