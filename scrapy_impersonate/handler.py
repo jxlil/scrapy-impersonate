@@ -1,6 +1,6 @@
 from typing import Optional, Type, TypeVar
 
-from curl_cffi.requests import AsyncSession, BrowserType
+from curl_cffi.requests import AsyncSession
 from scrapy import signals
 from scrapy.core.downloader.handlers.http import HTTPDownloadHandler
 from scrapy.crawler import Crawler
@@ -25,7 +25,6 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
         crawler.signals.connect(self._engine_started, signals.engine_started)
 
         self.client: Optional[AsyncSession] = None
-        self._default_impersonate = BrowserType.chrome110
 
     @classmethod
     def from_crawler(cls: Type[ImpersonateHandler], crawler: Crawler) -> ImpersonateHandler:
