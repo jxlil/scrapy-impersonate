@@ -92,10 +92,6 @@ class RequestParser:
     def verify(self) -> Optional[bool]:
         return self._impersonate_args.get("verify")
 
-    @property
-    def thread(self) -> Optional[str]:
-        return self._impersonate_args.get("thread")
-
     def as_dict(self) -> dict:
         return {
             property_name: getattr(self, property_name)
