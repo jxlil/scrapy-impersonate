@@ -57,7 +57,7 @@ class ImpersonateSpider(scrapy.Spider):
         # ja3_hash: 773906b0efdefa24a7f2b8eb6985bf37
         # ja3_hash: cd08e31494f9531f560d64c695473da9
         # ja3_hash: 2fe1311860bc318fc7f9196556a2a6b9
-        return {"ja3_hash": response.json()["ja3_hash"]}
+        yield {"ja3_hash": response.json()["ja3_hash"]}
 ```
 
 ## Supported browsers
