@@ -1,6 +1,7 @@
 import base64
 from typing import Optional, Tuple, Union
 from urllib.parse import urlparse
+from curl_cffi import CurlHttpVersion
 
 from scrapy.http import Request
 
@@ -93,7 +94,7 @@ class RequestParser:
         return self._impersonate_args.get("verify")
 
     @property
-    def http_version(self) -> Optional[str]:
+    def http_version(self) -> Optional[CurlHttpVersion]:
         return self._impersonate_args.get("http_version")
 
     def as_dict(self) -> dict:
