@@ -92,6 +92,10 @@ class RequestParser:
     def verify(self) -> Optional[bool]:
         return self._impersonate_args.get("verify")
 
+    @property
+    def http_version(self) -> Optional[bool]:
+        return self._impersonate_args.get("http_version")
+
     def as_dict(self) -> dict:
         return {
             property_name: getattr(self, property_name)
