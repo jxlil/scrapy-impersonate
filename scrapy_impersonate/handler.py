@@ -37,7 +37,7 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
         async with AsyncSession() as client:
             response = await client.request(**RequestParser(request).as_dict())  # type: ignore
 
-        headers = Headers(response.headers)
+        headers = Headers(response.headers.multi_items())
         headers.pop("Content-Encoding", None)
 
         respcls = responsetypes.from_args(
