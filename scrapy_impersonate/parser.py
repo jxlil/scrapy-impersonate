@@ -1,7 +1,35 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from curl_cffi import CurlHttpVersion, CurlMime
+from curl_cffi import CurlHttpVersion, CurlMime, CurlOpt
 from scrapy.http import Request
+
+
+class CurlOptionsParser:
+    def __init__(self, request: Request) -> None:
+        self.request = request
+        self.curl_options = {}
+
+    @staticmethod
+    def curl_option_method(func):
+        func._is_curl_option = True
+        return func
+
+    @curl_option_method
+    def _set_proxy_auth(self):
+        """Add support for proxy auth headers"""
+
+        proxy_authorization = self.request.headers.pop(b'Proxy-Authorization', "")
+        if proxy_authorization:
+            proxy_header = [b"Proxy-Authorization: " + proxy_authorization[0]]
+            self.curl_options[CurlOpt.PROXYHEADER] = proxy_header
+
+    def as_dict(self):
+        for method_name in dir(self):
+            method = getattr(self, method_name)
+            if callable(method) and getattr(method, "_is_curl_option", False):
+                method()
+
+        return self.curl_options
 
 
 class RequestParser:

@@ -1,7 +1,6 @@
 from typing import Type, TypeVar
 
 from curl_cffi.requests import AsyncSession
-from curl_cffi.curl import CurlOpt
 from scrapy.core.downloader.handlers.http import HTTPDownloadHandler
 from scrapy.crawler import Crawler
 from scrapy.http import Headers, Request, Response
@@ -11,7 +10,7 @@ from scrapy.utils.defer import deferred_f_from_coro_f
 from scrapy.utils.reactor import verify_installed_reactor
 from twisted.internet.defer import Deferred
 
-from scrapy_impersonate.parser import RequestParser
+from scrapy_impersonate.parser import CurlOptionsParser, RequestParser
 
 ImpersonateHandler = TypeVar("ImpersonateHandler", bound="ImpersonateDownloadHandler")
 
@@ -35,13 +34,7 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
     @deferred_f_from_coro_f
     async def _download_request(self, request: Request, spider: Spider) -> Response:
-        #  Add support for proxy auth headers
-        curl_options = {}
-        proxy_header = []
-        if b'Proxy-Authorization' in request.headers:
-            proxy_header_authorization=b'Proxy-Authorization: '+ request.headers.pop(b'Proxy-Authorization')[0]
-            proxy_header.append(proxy_header_authorization)
-            curl_options[CurlOpt.PROXYHEADER] = proxy_header
+        curl_options = CurlOptionsParser(request).as_dict()
         async with AsyncSession(max_clients=1,curl_options=curl_options) as client:
             response = await client.request(**RequestParser(request).as_dict())  # type: ignore
 
