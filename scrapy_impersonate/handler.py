@@ -35,8 +35,9 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
     @deferred_f_from_coro_f
     async def _download_request(self, request: Request, spider: Spider) -> Response:
         curl_options = CurlOptionsParser(request).as_dict()
-        async with AsyncSession(max_clients=1,curl_options=curl_options) as client:
-            response = await client.request(**RequestParser(request).as_dict())  # type: ignore
+        async with AsyncSession(max_clients=1, curl_options=curl_options) as client:
+            request_args = RequestParser(request).as_dict()
+            response = await client.request(**request_args)
 
         headers = Headers(response.headers.multi_items())
         headers.pop("Content-Encoding", None)
