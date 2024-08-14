@@ -1,18 +1,18 @@
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from curl_cffi import CurlHttpVersion, CurlMime, CurlOpt
+from curl_cffi import CurlOpt
 from scrapy.http import Request
+
+
+def curl_option_method(func):
+    func._is_curl_option = True
+    return func
 
 
 class CurlOptionsParser:
     def __init__(self, request: Request) -> None:
         self.request = request
         self.curl_options = {}
-
-    @staticmethod
-    def curl_option_method(func):
-        func._is_curl_option = True
-        return func
 
     @curl_option_method
     def _set_proxy_auth(self):
