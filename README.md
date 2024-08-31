@@ -27,7 +27,7 @@ Also, be sure to [install the asyncio-based Twisted reactor](https://docs.scrapy
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 ```
 
-## Basic usage
+## Usage
 
 Set the `impersonate` [Request.meta](https://docs.scrapy.org/en/latest/topics/request-response.html#scrapy.http.Request.meta) key to download a request using `curl_cffi`:
 
@@ -59,6 +59,25 @@ class ImpersonateSpider(scrapy.Spider):
         # ja3_hash: 2fe1311860bc318fc7f9196556a2a6b9
         yield {"ja3_hash": response.json()["ja3_hash"]}
 ```
+
+### impersonate-args
+
+You can pass any necessary [arguments](https://github.com/lexiforest/curl_cffi/blob/38a91f2e7b23d9c9bda1d8085b7e41e33767c768/curl_cffi/requests/session.py#L1189-L1222) to `curl_cffi` through `impersonate_args`. For example:
+
+```python
+yield scrapy.Request(
+    "https://tls.browserleaks.com/json",
+    dont_filter=True,
+    meta={
+        "impersonate": browser,
+        "impersonate_args": {
+            "verify": False,
+            "timeout": 10,
+        },
+    },
+)
+```
+
 
 ## Supported browsers
 
