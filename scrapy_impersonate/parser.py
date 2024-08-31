@@ -80,6 +80,10 @@ class RequestParser:
         return self._request.meta.get("proxy")
 
     @property
+    def verify(self) -> bool:
+        return self._request.meta.get("verify", True)
+
+    @property
     def impersonate(self) -> Optional[str]:
         return self._request.meta.get("impersonate")
 
