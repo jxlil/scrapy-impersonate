@@ -12,7 +12,7 @@ pip install scrapy-impersonate
 
 ## Activation
 
-Replace the default `http` and/or `https` Download Handlers through [`DOWNLOAD_HANDLERS`](https://docs.scrapy.org/en/latest/topics/settings.html#download-handlers)
+To use this package, replace the default `http` and `https` Download Handlers by updating the [`DOWNLOAD_HANDLERS`](https://docs.scrapy.org/en/latest/topics/settings.html#download-handlers) setting:
 
 ```python
 DOWNLOAD_HANDLERS = {
@@ -21,11 +21,17 @@ DOWNLOAD_HANDLERS = {
 }
 ```
 
-Also, be sure to [install the asyncio-based Twisted reactor](https://docs.scrapy.org/en/latest/topics/asyncio.html#installing-the-asyncio-reactor):
+By setting `USER_AGENT = None`, `curl_cffi` will automatically choose the appropriate User-Agent based on the impersonated browser:
+```python
+USER_AGENT = None
+```
+
+Also, be sure to [install the asyncio-based Twisted reactor](https://docs.scrapy.org/en/latest/topics/asyncio.html#installing-the-asyncio-reactor) for proper asynchronous execution:
 
 ```python
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 ```
+
 
 ## Usage
 
@@ -38,6 +44,7 @@ import scrapy
 class ImpersonateSpider(scrapy.Spider):
     name = "impersonate_spider"
     custom_settings = {
+        "USER_AGENT": None,
         "DOWNLOAD_HANDLERS": {
             "http": "scrapy_impersonate.ImpersonateDownloadHandler",
             "https": "scrapy_impersonate.ImpersonateDownloadHandler",
