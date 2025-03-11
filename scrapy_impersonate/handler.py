@@ -34,6 +34,8 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
     @deferred_f_from_coro_f
     async def _download_request(self, request: Request, spider: Spider) -> Response:
+        # copy the request to avoid mutating the original in CurlOptionsParser (which pops headers)
+        request_orig = request.copy()
         curl_options = CurlOptionsParser(request).as_dict()
         async with AsyncSession(max_clients=1, curl_options=curl_options) as client:
             request_args = RequestParser(request).as_dict()
@@ -54,5 +56,5 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
             headers=headers,
             body=response.content,
             flags=["impersonate"],
-            request=request,
+            request=request_orig,
         )
