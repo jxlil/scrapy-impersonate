@@ -32,8 +32,6 @@ class CurlOptionsParser:
 
 
 class RequestParser:
-    # TODO: Implement @request_arg_method instead of @property
-
     def __init__(self, request: Request) -> None:
         self._request = request
         self._impersonate_args = request.meta.get("impersonate_args", {})
@@ -52,7 +50,10 @@ class RequestParser:
 
     @property
     def data(self) -> Optional[Any]:
-        return self._request.body
+        # Prevent curl_cffi from adding the "Content-Type: application/octet-stream" header
+        # when the request body is empty.
+        body = self._request.body
+        return None if body == b"" else body
 
     @property
     def headers(self) -> dict:
