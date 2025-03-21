@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from curl_cffi import CurlOpt
-from scrapy.http import Request
+from scrapy.http.request import Request
 
 
 def curl_option_method(func):

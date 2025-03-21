@@ -1,9 +1,13 @@
 from typing import Type, TypeVar
 
 from curl_cffi.requests import AsyncSession
-from scrapy.core.downloader.handlers.http import HTTPDownloadHandler
+from scrapy.core.downloader.handlers.http11 import (
+    HTTP11DownloadHandler as HTTPDownloadHandler,
+)
 from scrapy.crawler import Crawler
-from scrapy.http import Headers, Request, Response
+from scrapy.http.headers import Headers
+from scrapy.http.request import Request
+from scrapy.http.response import Response
 from scrapy.responsetypes import responsetypes
 from scrapy.spiders import Spider
 from scrapy.utils.defer import deferred_f_from_coro_f
