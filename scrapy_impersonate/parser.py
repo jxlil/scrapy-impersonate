@@ -1,3 +1,5 @@
+import base64
+import ctypes
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from curl_cffi import CurlOpt
@@ -17,11 +19,21 @@ class CurlOptionsParser:
     @curl_option_method
     def _set_proxy_auth(self):
         """Add support for proxy auth headers"""
-
-        if proxy_authorization := self.request.headers.pop(b"Proxy-Authorization", None):
-            proxy_header = [b"Proxy-Authorization: " + proxy_authorization[0]]
-            self.curl_options[CurlOpt.PROXYHEADER] = proxy_header
-
+        if proxy := self.request.meta.get("proxy"):
+            if proxy.startswith("http://") or proxy.startswith("https://"):
+                proxy_authorization = self.request.headers.pop(b"Proxy-Authorization", None)
+                if proxy_authorization:
+                    proxy_header = [b"Proxy-Authorization: " + proxy_authorization[0]]
+                    self.curl_options[CurlOpt.PROXYHEADER] = proxy_header
+            elif proxy.startswith("socks5://") or proxy.startswith("socks4://"):
+                # For SOCKS5 proxy authentication, we need to extract the username and password
+                auth = self.request.headers.pop(b"Proxy-Authorization", None)
+                if auth:
+                    username,password = base64.b64decode(auth[0].split(b" ")[1]).split(b":")
+                    self.curl_options[CurlOpt.PROXYUSERNAME] = username
+                    self.curl_options[CurlOpt.PROXYPASSWORD] = password
+                    self.curl_options[CurlOpt.SOCKS5_AUTH] = ctypes.c_ulong(0x01).value
+                    
     def as_dict(self):
         for method_name in dir(self):
             method = getattr(self, method_name)
