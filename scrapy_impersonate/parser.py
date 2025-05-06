@@ -32,7 +32,7 @@ class CurlOptionsParser:
                     username,password = base64.b64decode(auth[0].split(b" ")[1]).split(b":")
                     self.curl_options[CurlOpt.PROXYUSERNAME] = username
                     self.curl_options[CurlOpt.PROXYPASSWORD] = password
-                    self.curl_options[CurlOpt.SOCKS5_AUTH] = ctypes.c_ulong(0x01).value
+
                     
     def as_dict(self):
         for method_name in dir(self):
