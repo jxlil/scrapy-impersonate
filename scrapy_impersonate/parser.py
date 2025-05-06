@@ -25,7 +25,7 @@ class CurlOptionsParser:
                 if proxy_authorization:
                     proxy_header = [b"Proxy-Authorization: " + proxy_authorization[0]]
                     self.curl_options[CurlOpt.PROXYHEADER] = proxy_header
-            elif proxy.startswith("socks5://") or proxy.startswith("socks4://"):
+            elif proxy.startswith("socks5h://") or proxy.startswith("socks5://") or proxy.startswith("socks4://"):
                 # For SOCKS5 proxy authentication, we need to extract the username and password
                 auth = self.request.headers.pop(b"Proxy-Authorization", None)
                 if auth:
