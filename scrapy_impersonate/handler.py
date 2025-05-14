@@ -1,3 +1,4 @@
+import time
 from typing import Type, TypeVar
 from urllib.parse import urljoin, urlparse
 
@@ -50,7 +51,9 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
         async with AsyncSession(max_clients=1, curl_options=curl_options) as client:
             request_args = RequestParser(request).as_dict()
+            start_time = time.time()
             response = await client.request(**request_args)
+            download_latency = time.time() - start_time
 
         headers = Headers(response.headers.multi_items())
         headers.pop("Content-Encoding", None)
@@ -82,7 +85,7 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
             body=response.content,
         )
 
-        return respcls(
+        resp = respcls(
             url=response.url,
             status=response.status_code,
             headers=headers,
@@ -90,3 +93,5 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
             flags=["impersonate"],
             request=request_orig,
         )
+        resp.meta["download_latency"] = download_latency
+        return resp
