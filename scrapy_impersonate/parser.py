@@ -1,5 +1,4 @@
 import base64
-import ctypes
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from curl_cffi import CurlOpt
@@ -25,15 +24,18 @@ class CurlOptionsParser:
                 if proxy_authorization:
                     proxy_header = [b"Proxy-Authorization: " + proxy_authorization[0]]
                     self.curl_options[CurlOpt.PROXYHEADER] = proxy_header
-            elif proxy.startswith("socks5h://") or proxy.startswith("socks5://") or proxy.startswith("socks4://"):
+            elif (
+                proxy.startswith("socks5h://")
+                or proxy.startswith("socks5://")
+                or proxy.startswith("socks4://")
+            ):
                 # For SOCKS5 proxy authentication, we need to extract the username and password
                 auth = self.request.headers.pop(b"Proxy-Authorization", None)
                 if auth:
-                    username,password = base64.b64decode(auth[0].split(b" ")[1]).split(b":")
+                    username, password = base64.b64decode(auth[0].split(b" ")[1]).split(b":")
                     self.curl_options[CurlOpt.PROXYUSERNAME] = username
                     self.curl_options[CurlOpt.PROXYPASSWORD] = password
 
-                    
     def as_dict(self):
         for method_name in dir(self):
             method = getattr(self, method_name)
@@ -86,7 +88,8 @@ class RequestParser:
 
     @property
     def allow_redirects(self) -> bool:
-        return False if self._request.meta.get("dont_redirect") else True
+        # Prevent curl_cffi from doing redirects, these should be handled by the ImpersonateDownloadHandler
+        return False
 
     @property
     def proxy(self) -> Optional[str]:
