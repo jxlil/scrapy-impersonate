@@ -88,7 +88,7 @@ class RequestParser:
 
     @property
     def allow_redirects(self) -> bool:
-        # Prevent curl_cffi from doing redirects, these should be handled by the ImpersonateDownloadHandler
+        # Prevent curl_cffi from doing redirects, these should be handled by Scrapy
         return False
 
     @property
