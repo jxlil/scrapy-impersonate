@@ -41,13 +41,7 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
     @deferred_f_from_coro_f
     async def _download_request(self, request: Request, spider: Spider) -> Response:
-        # copy the request to avoid mutating the original in CurlOptionsParser (which pops headers)
-        request_orig = request.copy()
-        curl_options = CurlOptionsParser(request).as_dict()
-
-        allowed_domains = getattr(spider, "allowed_domains", [])
-        if allowed_domains:
-            request.meta["dont_redirect"] = True
+        curl_options = CurlOptionsParser(request.copy()).as_dict()
 
         async with AsyncSession(max_clients=1, curl_options=curl_options) as client:
             request_args = RequestParser(request).as_dict()
@@ -58,25 +52,12 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
         headers = Headers(response.headers.multi_items())
         headers.pop("Content-Encoding", None)
 
-        if 300 <= response.status_code < 400 and b"Location" in headers:
-            location = headers.get("Location") or b""
-            location = location.decode()
-
-            redirected_url = (
-                location if location.startswith("http") else urljoin(request.url, location)
-            )
-
-            domain = urlparse(redirected_url).netloc
-            if not any(domain == d for d in allowed_domains):  # type: ignore
-                spider.logger.warning(
-                    f"Filtered offsite request to %(domain)r: %(request)s",
-                    {"domain": domain, "request": request},
-                    extra={"spider": spider},
-                )
-
-                raise IgnoreRequest(f"Redirected to disallowed domain: {redirected_url}")
-
-            new_request = request.replace(url=redirected_url)
+        if (
+            300 <= response.status_code < 400
+            and b"Location" in headers
+            and not request.meta.get("dont_redirect")
+        ):
+            new_request = self._handle_redirect(request, headers, spider)
             return self._download_request(new_request, spider)  # type: ignore
 
         respcls = responsetypes.from_args(
@@ -91,7 +72,33 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
             headers=headers,
             body=response.content,
             flags=["impersonate"],
-            request=request_orig,
+            request=request,
         )
+
         resp.meta["download_latency"] = download_latency
         return resp
+
+    @staticmethod
+    def _handle_redirect(request: Request, headers: Headers, spider: Spider) -> Request:
+        allowed_domains = getattr(spider, "allowed_domains", [])
+        if allowed_domains:
+            request.meta["dont_redirect"] = True
+
+        location = headers.get("Location") or b""
+        location = location.decode()
+
+        redirected_url = (
+            location if location.startswith("http") else urljoin(request.url, location)
+        )
+
+        domain = urlparse(redirected_url).netloc
+        if not any(domain == d for d in allowed_domains):  # type: ignore
+            spider.logger.warning(
+                f"Filtered offsite request to %(domain)r: %(request)s",
+                {"domain": domain, "request": request},
+                extra={"spider": spider},
+            )
+
+            raise IgnoreRequest(f"Redirected to disallowed domain: {redirected_url}")
+
+        return request.replace(url=redirected_url)
