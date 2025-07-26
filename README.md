@@ -44,26 +44,31 @@ import scrapy
 class ImpersonateSpider(scrapy.Spider):
     name = "impersonate_spider"
     custom_settings = {
+        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
         "USER_AGENT": None,
         "DOWNLOAD_HANDLERS": {
             "http": "scrapy_impersonate.ImpersonateDownloadHandler",
             "https": "scrapy_impersonate.ImpersonateDownloadHandler",
         },
-        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+        "DOWNLOADER_MIDDLEWARES": {
+            "scrapy_impersonate.RandomBrowserMiddleware": 1000,
+        },
     }
 
     def start_requests(self):
-        for browser in ["chrome110", "edge99", "safari15_5"]:
+        for _ in range(5):
             yield scrapy.Request(
                 "https://tls.browserleaks.com/json",
                 dont_filter=True,
-                meta={"impersonate": browser},
             )
 
     def parse(self, response):
-        # ja3_hash: 773906b0efdefa24a7f2b8eb6985bf37
-        # ja3_hash: cd08e31494f9531f560d64c695473da9
-        # ja3_hash: 2fe1311860bc318fc7f9196556a2a6b9
+        # ja3_hash: 98cc085d47985d3cca9ec1415bbbf0d1 (chrome133a)
+        # ja3_hash: 2d692a4485ca2f5f2b10ecb2d2909ad3 (firefox133)
+        # ja3_hash: c11ab92a9db8107e2a0b0486f35b80b9 (chrome124)
+        # ja3_hash: 773906b0efdefa24a7f2b8eb6985bf37 (safari15_5)
+        # ja3_hash: cd08e31494f9531f560d64c695473da9 (chrome99_android)
+
         yield {"ja3_hash": response.json()["ja3_hash"]}
 ```
 
