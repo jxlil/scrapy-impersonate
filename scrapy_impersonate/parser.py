@@ -18,23 +18,21 @@ class CurlOptionsParser:
     @curl_option_method
     def _set_proxy_auth(self):
         """Add support for proxy auth headers"""
-        if proxy := self.request.meta.get("proxy"):
-            if proxy.startswith("http://") or proxy.startswith("https://"):
-                proxy_authorization = self.request.headers.pop(b"Proxy-Authorization", None)
-                if proxy_authorization:
-                    proxy_header = [b"Proxy-Authorization: " + proxy_authorization[0]]
-                    self.curl_options[CurlOpt.PROXYHEADER] = proxy_header
-            elif (
-                proxy.startswith("socks5h://")
-                or proxy.startswith("socks5://")
-                or proxy.startswith("socks4://")
-            ):
-                # For SOCKS5 proxy authentication, we need to extract the username and password
-                auth = self.request.headers.pop(b"Proxy-Authorization", None)
-                if auth:
-                    username, password = base64.b64decode(auth[0].split(b" ")[1]).split(b":")
-                    self.curl_options[CurlOpt.PROXYUSERNAME] = username
-                    self.curl_options[CurlOpt.PROXYPASSWORD] = password
+
+        proxy_auth = self.request.headers.pop(b"Proxy-Authorization", None)
+        if proxy_auth is None:
+            return
+
+        proxy = self.request.meta.get("proxy", "")
+        if proxy.startswith(("http://", "https://")):
+            proxy_auth_header = [b"Proxy-Authorization: " + proxy_auth[0]]
+            self.curl_options[CurlOpt.PROXYHEADER] = proxy_auth_header
+
+        elif proxy.startswith(("socks5h://", "socks5://", "socks4://")):
+            # For SOCKS5 proxy authentication, we need to extract the username and password
+            username, password = base64.b64decode(proxy_auth[0].split(b" ")[1]).split(b":")
+            self.curl_options[CurlOpt.PROXYUSERNAME] = username
+            self.curl_options[CurlOpt.PROXYPASSWORD] = password
 
     def as_dict(self):
         for method_name in dir(self):
