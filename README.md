@@ -45,7 +45,7 @@ class ImpersonateSpider(scrapy.Spider):
     name = "impersonate_spider"
     custom_settings = {
         "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
-        "USER_AGENT": None,
+        "USER_AGENT": "",
         "DOWNLOAD_HANDLERS": {
             "http": "scrapy_impersonate.ImpersonateDownloadHandler",
             "https": "scrapy_impersonate.ImpersonateDownloadHandler",
