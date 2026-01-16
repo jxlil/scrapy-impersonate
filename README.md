@@ -23,7 +23,7 @@ DOWNLOAD_HANDLERS = {
 
 By setting `USER_AGENT = None`, `curl_cffi` will automatically choose the appropriate User-Agent based on the impersonated browser:
 ```python
-USER_AGENT = None
+USER_AGENT = ""
 ```
 
 Also, be sure to [install the asyncio-based Twisted reactor](https://docs.scrapy.org/en/latest/topics/asyncio.html#installing-the-asyncio-reactor) for proper asynchronous execution:
