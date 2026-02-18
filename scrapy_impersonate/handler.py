@@ -35,9 +35,15 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
     def download_request(self, request: Request, spider: Spider) -> Deferred:
         if request.meta.get("impersonate"):
-            return self._download_request(request, spider)
+            try:
+                return self._download_request(request, spider)
+            except TypeError:
+                return self._download_request(request)
 
-        return super().download_request(request, spider)
+        try:
+            return super().download_request(request, spider)
+        except TypeError:
+            return super().download_request(request)
 
     @deferred_f_from_coro_f
     async def _download_request(self, request: Request, spider: Spider) -> Response:
