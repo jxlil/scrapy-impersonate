@@ -46,7 +46,7 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
             return super().download_request(request)
 
     @deferred_f_from_coro_f
-    async def _download_request(self, request: Request, spider: Spider) -> Response:
+    async def _download_request(self, request: Request) -> Response:
         curl_options = CurlOptionsParser(request.copy()).as_dict()
 
         async with AsyncSession(max_clients=1, curl_options=curl_options) as client:
