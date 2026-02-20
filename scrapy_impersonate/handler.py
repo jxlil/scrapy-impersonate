@@ -35,10 +35,7 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
     def download_request(self, request: Request, spider: Spider) -> Deferred:
         if request.meta.get("impersonate"):
-            try:
-                return self._download_request(request, spider)
-            except TypeError:
-                return self._download_request(request)
+            return self._download_request(request)
 
         try:
             return super().download_request(request, spider)
