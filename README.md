@@ -139,7 +139,7 @@ The following browsers can be impersonated (`curl_cffi >= 0.15.0`):
 
 1. The old Safari target names (`safari15_3`, `safari15_5`, `safari17_0`, `safari17_2_ios`, `safari18_0`, `safari18_0_ios`) are kept as deprecated aliases. Prefer the new names (`safari153`, `safari155`, …) for new code.
 2. You can also pass a floating value like `impersonate="chrome"`, `"safari"`, `"safari_ios"` or `"firefox"` to let `curl_cffi` pick the most recent fingerprint without pinning a version.
-3. `tor` is not included in `RandomBrowserMiddleware`'s default rotation. To include it, set `IMPERSONATE_BROWSERS = ["chrome", "firefox", "safari", "edge", "tor"]`.
+3. `RandomBrowserMiddleware` rotates across `chrome`, `firefox`, `safari`, `edge` and `tor` by default. Override with `IMPERSONATE_BROWSERS` to narrow the set (e.g. `IMPERSONATE_BROWSERS = ["chrome", "firefox"]`).
 </sub>
 
 ## Thanks
