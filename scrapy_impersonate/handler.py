@@ -10,10 +10,7 @@ from scrapy.http.headers import Headers
 from scrapy.http.request import Request
 from scrapy.http.response import Response
 from scrapy.responsetypes import responsetypes
-from scrapy.spiders import Spider
-from scrapy.utils.defer import deferred_f_from_coro_f
 from scrapy.utils.reactor import verify_installed_reactor
-from twisted.internet.defer import Deferred
 
 from scrapy_impersonate.parser import CurlOptionsParser, RequestParser
 
@@ -33,16 +30,11 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
     def from_crawler(cls: Type[ImpersonateHandler], crawler: Crawler) -> ImpersonateHandler:
         return cls(crawler)
 
-    def download_request(self, request: Request, spider: Spider) -> Deferred:
+    async def download_request(self, request: Request) -> Response:
         if request.meta.get("impersonate"):
-            return self._download_request(request)
+            return await self._download_request(request)
+        return await super().download_request(request)
 
-        try:
-            return super().download_request(request, spider)
-        except TypeError:
-            return super().download_request(request)
-
-    @deferred_f_from_coro_f
     async def _download_request(self, request: Request) -> Response:
         curl_options = CurlOptionsParser(request.copy()).as_dict()
 
