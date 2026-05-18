@@ -4,7 +4,7 @@ from curl_cffi import BrowserType
 
 
 class RandomBrowserMiddleware:
-    DEFAULT_BROWSERS = ["chrome", "firefox", "safari", "edge"]
+    DEFAULT_BROWSERS = ["chrome", "firefox", "safari", "edge", "tor"]
 
     def __init__(self, settings) -> None:
         imp_browsers = settings.getlist("IMPERSONATE_BROWSERS", self.DEFAULT_BROWSERS)
