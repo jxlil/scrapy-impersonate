@@ -142,6 +142,18 @@ The following browsers can be impersonated (`curl_cffi >= 0.15.0`):
 3. `RandomBrowserMiddleware` rotates across `chrome`, `firefox`, `safari`, `edge` and `tor` by default. Override with `IMPERSONATE_BROWSERS` to narrow the set (e.g. `IMPERSONATE_BROWSERS = ["chrome", "firefox"]`).
 </sub>
 
+## Development
+
+Install the development dependencies and run the test suite:
+
+```bash
+pip install -r requirements-dev.txt
+pip install -e .
+pytest
+```
+
+The tests spin up local HTTP/HTTPS servers and a `CONNECT` proxy, so no network access is required.
+
 ## Thanks
 
 This project is inspired by the following projects:
