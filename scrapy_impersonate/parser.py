@@ -34,11 +34,26 @@ class CurlOptionsParser:
             self.curl_options[CurlOpt.PROXYUSERNAME] = username
             self.curl_options[CurlOpt.PROXYPASSWORD] = password
 
+    def _set_custom_options(self):
+        """Add support for raw libcurl options set through request.meta"""
+
+        for option, value in self.request.meta.get("impersonate_curl_options", {}).items():
+            if isinstance(option, str):
+                try:
+                    option = CurlOpt[option.upper()]
+                except KeyError:
+                    raise ValueError(f"Unknown curl option: {option}") from None
+
+            self.curl_options[option] = value
+
     def as_dict(self):
         for method_name in dir(self):
             method = getattr(self, method_name)
             if callable(method) and getattr(method, "_is_curl_option", False):
                 method()
+
+        # applied last, so that user provided options take precedence
+        self._set_custom_options()
 
         return self.curl_options
 
