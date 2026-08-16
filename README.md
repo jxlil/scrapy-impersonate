@@ -74,7 +74,7 @@ class ImpersonateSpider(scrapy.Spider):
 
 ### impersonate-args
 
-You can pass any necessary [arguments](https://github.com/lexiforest/curl_cffi/blob/38a91f2e7b23d9c9bda1d8085b7e41e33767c768/curl_cffi/requests/session.py#L1189-L1222) to `curl_cffi` through `impersonate_args`. For example:
+You can pass any necessary [arguments](https://curl-cffi.readthedocs.io/en/latest/api.html#curl_cffi.requests.Session.request) to `curl_cffi` through `impersonate_args`. For example:
 
 ```python
 yield scrapy.Request(
@@ -85,6 +85,37 @@ yield scrapy.Request(
         "impersonate_args": {
             "verify": False,
             "timeout": 10,
+        },
+    },
+)
+```
+
+Some arguments worth knowing about:
+
+| Argument | Description |
+| --- | --- |
+| `http_version` | Set to `"v3"` to use HTTP/3. Targets with an HTTP/3 fingerprint are marked in the table below |
+| `doh_url` | Resolve DNS over HTTPS instead of using the system resolver (`curl_cffi >= 0.16.0`) |
+| `interface` | Bind the request to a network interface or local source address |
+| `extra_fp` | Fine-tune fingerprint details on top of the impersonated browser |
+
+> [!WARNING]
+> `allow_redirects` is forced to `False` so that redirects are handled by Scrapy. Re-enabling it through `impersonate_args` makes `curl_cffi` follow redirects internally, which bypasses Scrapy's redirect and offsite middlewares and exposes you to [redirect-based SSRF](https://github.com/lexiforest/curl_cffi/security/advisories/GHSA-qw2m-4pqf-rmpp).
+
+### curl-options
+
+For settings that have no `curl_cffi` argument, `impersonate_curl_options` passes raw [libcurl options](https://curl-cffi.readthedocs.io/en/latest/api.html#curl_cffi.CurlOpt) through. Keys can be `CurlOpt` members or their names, and they take precedence over the options set by this handler.
+
+The most common use is pinning the header order, which browsers keep stable and WAFs check (`HTTPHEADER_ORDER` requires `curl_cffi >= 0.16.0`):
+
+```python
+yield scrapy.Request(
+    "https://tls.browserleaks.com/json",
+    dont_filter=True,
+    meta={
+        "impersonate": "chrome",
+        "impersonate_curl_options": {
+            "HTTPHEADER_ORDER": "Host,Connection,User-Agent,Accept,Referer",
         },
     },
 )

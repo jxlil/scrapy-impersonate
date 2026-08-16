@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from curl_cffi import CurlOpt
 from scrapy.http.request import Request
 from scrapy.utils.test import get_crawler
 
@@ -38,6 +39,23 @@ async def test_headers_are_sent(handler, http_server):
     response = await handler.download_request(request)
 
     assert echoed(response)["headers"]["x-custom"] == "value"
+
+
+@pytest.mark.skipif(
+    not hasattr(CurlOpt, "HTTPHEADER_ORDER"), reason="requires curl_cffi >= 0.16.0"
+)
+async def test_curl_options_set_the_header_order(handler, http_server):
+    request = Request(
+        http_server.url,
+        meta={
+            "impersonate": "chrome",
+            "impersonate_curl_options": {"HTTPHEADER_ORDER": "Host,Accept,User-Agent"},
+        },
+    )
+
+    response = await handler.download_request(request)
+
+    assert list(echoed(response)["headers"])[:3] == ["host", "accept", "user-agent"]
 
 
 class TestProxyAuthorization:

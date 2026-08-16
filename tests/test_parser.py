@@ -53,6 +53,46 @@ class TestCurlOptionsParser:
         assert CurlOptionsParser(request).as_dict() == {}
 
 
+class TestCustomCurlOptions:
+    def test_option_names_are_resolved(self):
+        request = make_request(
+            meta={"impersonate": "chrome", "impersonate_curl_options": {"dns_servers": "1.1.1.1"}}
+        )
+
+        assert CurlOptionsParser(request).as_dict() == {CurlOpt.DNS_SERVERS: "1.1.1.1"}
+
+    def test_option_members_are_accepted(self):
+        request = make_request(
+            meta={"impersonate": "chrome", "impersonate_curl_options": {CurlOpt.MAXREDIRS: 0}}
+        )
+
+        assert CurlOptionsParser(request).as_dict() == {CurlOpt.MAXREDIRS: 0}
+
+    def test_unknown_option_is_rejected(self):
+        request = make_request(
+            meta={"impersonate": "chrome", "impersonate_curl_options": {"not_an_option": 1}}
+        )
+
+        with pytest.raises(ValueError, match="Unknown curl option: not_an_option"):
+            CurlOptionsParser(request).as_dict()
+
+    def test_custom_options_take_precedence(self):
+        request = make_request(
+            meta={
+                "impersonate": "chrome",
+                "proxy": "http://proxy.example:8080",
+                "impersonate_curl_options": {
+                    "PROXYHEADER": [b"Proxy-Authorization: Bearer token"]
+                },
+            },
+            headers={"Proxy-Authorization": "Basic dXNlcjpwYXNz"},
+        )
+
+        curl_options = CurlOptionsParser(request).as_dict()
+
+        assert curl_options[CurlOpt.PROXYHEADER] == [b"Proxy-Authorization: Bearer token"]
+
+
 class TestRequestParser:
     def test_basic_arguments(self):
         request = make_request(method="POST", body=b"payload")

@@ -33,6 +33,28 @@ jobs:
       - name: Run tests
         run: pytest -v
 
+  minimum-versions:
+    # The other job always resolves to the latest releases, so pin the declared
+    # minimums here to catch them drifting out of support.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e .
+          pip install curl-cffi==0.15.0 scrapy==2.13.4
+
+      - name: Run tests
+        run: pytest -v
+
   lint:
     runs-on: ubuntu-latest
 
