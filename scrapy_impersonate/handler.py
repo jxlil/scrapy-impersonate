@@ -36,10 +36,14 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
         return await super().download_request(request)
 
     async def _download_request(self, request: Request) -> Response:
-        curl_options = CurlOptionsParser(request.copy()).as_dict()
+        # Work on a copy so CurlOptionsParser (which pops headers) does not mutate
+        # the original request, and so those popped headers (e.g. Proxy-Authorization)
+        # are not sent to the target server by RequestParser.
+        request_copy = request.copy()
+        curl_options = CurlOptionsParser(request_copy).as_dict()
 
         async with AsyncSession(max_clients=1, curl_options=curl_options) as client:
-            request_args = RequestParser(request).as_dict()
+            request_args = RequestParser(request_copy).as_dict()
             start_time = time.time()
             response = await client.request(**request_args)
             download_latency = time.time() - start_time
