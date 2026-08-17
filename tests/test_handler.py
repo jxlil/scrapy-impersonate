@@ -2,7 +2,9 @@ import json
 
 import pytest
 from curl_cffi import CurlOpt
+from scrapy.core.downloader.handlers import DownloadHandlers
 from scrapy.http.request import Request
+from scrapy.spiders import Spider
 from scrapy.utils.test import get_crawler
 
 from scrapy_impersonate import ImpersonateDownloadHandler
@@ -56,6 +58,32 @@ async def test_curl_options_set_the_header_order(handler, http_server):
     response = await handler.download_request(request)
 
     assert list(echoed(response)["headers"])[:3] == ["host", "accept", "user-agent"]
+
+
+@pytest.mark.filterwarnings("error::scrapy.exceptions.ScrapyDeprecationWarning")
+async def test_request_is_downloaded_through_scrapy_dispatch(http_server):
+    """Regression test for https://github.com/jxlil/scrapy-impersonate/issues/55
+
+    Every other test calls the handler directly, so none of them notices when its
+    signature stops matching the one the installed Scrapy calls. Going through
+    DownloadHandlers is what pins the handler to the download handler API, and
+    turning the deprecation into an error is what keeps it on the current one:
+    Scrapy still accepts the pre-2.14 Deferred/spider variant, only warning about
+    it, so without this the drift would pass unnoticed until Scrapy drops it.
+    """
+    crawler = get_crawler(
+        Spider,
+        {"DOWNLOAD_HANDLERS": {"http": "scrapy_impersonate.ImpersonateDownloadHandler"}},
+    )
+    crawler.spider = Spider("test")
+    handlers = DownloadHandlers(crawler)
+    request = Request(f"{http_server.url}/hello", meta={"impersonate": "chrome"})
+
+    response = await handlers.download_request_async(request)
+
+    assert response.status == 200
+    assert "impersonate" in response.flags
+    assert echoed(response)["path"] == "/hello"
 
 
 class TestProxyAuthorization:

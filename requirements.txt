@@ -1,2 +1,2 @@
 curl-cffi>=0.15.0
-scrapy>=2.13.4
+scrapy>=2.14.0
