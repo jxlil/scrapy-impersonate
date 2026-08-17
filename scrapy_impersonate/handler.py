@@ -19,10 +19,7 @@ ImpersonateHandler = TypeVar("ImpersonateHandler", bound="ImpersonateDownloadHan
 
 class ImpersonateDownloadHandler(HTTPDownloadHandler):
     def __init__(self, crawler) -> None:
-        try:
-            super().__init__(settings=crawler.settings, crawler=crawler)
-        except TypeError:
-            super().__init__(crawler=crawler)
+        super().__init__(crawler=crawler)
 
         verify_installed_reactor("twisted.internet.asyncioreactor.AsyncioSelectorReactor")
 
