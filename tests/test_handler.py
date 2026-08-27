@@ -5,9 +5,11 @@ from curl_cffi import CurlOpt
 from scrapy.core.downloader.handlers import DownloadHandlers
 from scrapy.http.request import Request
 from scrapy.spiders import Spider
+from scrapy.utils.defer import deferred_to_future
 from scrapy.utils.test import get_crawler
 
 from scrapy_impersonate import ImpersonateDownloadHandler
+from scrapy_impersonate.handler import ASYNC_HANDLER_API
 from tests.servers import PROXY_CREDENTIALS
 
 
@@ -20,10 +22,23 @@ def echoed(response) -> dict:
     return json.loads(response.body)
 
 
+async def download(handler, request, spider=None):
+    """Download through the handler API of the installed Scrapy.
+
+    Before 2.14 the handler is called with a spider and returns a Deferred, so
+    tests cannot simply await it; from 2.14 on it is a coroutine method taking
+    the request alone.
+    """
+    if ASYNC_HANDLER_API:
+        return await handler.download_request(request)
+
+    return await deferred_to_future(handler.download_request(request, spider or Spider("test")))
+
+
 async def test_request_is_downloaded(handler, http_server):
     request = Request(f"{http_server.url}/hello", meta={"impersonate": "chrome"})
 
-    response = await handler.download_request(request)
+    response = await download(handler, request)
 
     assert response.status == 200
     assert "impersonate" in response.flags
@@ -38,7 +53,7 @@ async def test_headers_are_sent(handler, http_server):
         headers={"X-Custom": "value"},
     )
 
-    response = await handler.download_request(request)
+    response = await download(handler, request)
 
     assert echoed(response)["headers"]["x-custom"] == "value"
 
@@ -55,7 +70,7 @@ async def test_curl_options_set_the_header_order(handler, http_server):
         },
     )
 
-    response = await handler.download_request(request)
+    response = await download(handler, request)
 
     assert list(echoed(response)["headers"])[:3] == ["host", "accept", "user-agent"]
 
@@ -79,7 +94,10 @@ async def test_request_is_downloaded_through_scrapy_dispatch(http_server):
     handlers = DownloadHandlers(crawler)
     request = Request(f"{http_server.url}/hello", meta={"impersonate": "chrome"})
 
-    response = await handlers.download_request_async(request)
+    if ASYNC_HANDLER_API:
+        response = await handlers.download_request_async(request)
+    else:
+        response = await deferred_to_future(handlers.download_request(request, crawler.spider))
 
     assert response.status == 200
     assert "impersonate" in response.flags
@@ -108,17 +126,17 @@ class TestProxyAuthorization:
     async def test_proxy_receives_the_credentials(
         self, handler, proxy_server, request_through_proxy
     ):
-        await handler.download_request(request_through_proxy)
+        await download(handler, request_through_proxy)
 
         assert proxy_server.proxy_authorization == PROXY_CREDENTIALS
 
     async def test_origin_does_not_receive_the_credentials(self, handler, request_through_proxy):
-        response = await handler.download_request(request_through_proxy)
+        response = await download(handler, request_through_proxy)
 
         assert "proxy-authorization" not in echoed(response)["headers"]
 
     async def test_original_request_is_not_mutated(self, handler, request_through_proxy):
-        await handler.download_request(request_through_proxy)
+        await download(handler, request_through_proxy)
 
         assert request_through_proxy.headers.get(b"Proxy-Authorization") == (
             PROXY_CREDENTIALS.encode()

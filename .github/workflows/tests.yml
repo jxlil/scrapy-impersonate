@@ -35,8 +35,15 @@ jobs:
 
   minimum-versions:
     # The other job always resolves to the latest releases, so pin the declared
-    # minimums here to catch them drifting out of support.
+    # minimums here to catch them drifting out of support. Scrapy is pinned to
+    # the oldest release of each download handler API - the pre-2.14 one, which
+    # is the declared floor, and the coroutine one 2.14 introduced - so both
+    # branches of the handler are exercised.
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scrapy-version: ["2.13.4", "2.14.0"]
 
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +57,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           pip install -e .
-          pip install curl-cffi==0.15.0 scrapy==2.14.0
+          pip install curl-cffi==0.15.0 scrapy==${{ matrix.scrapy-version }}
 
       - name: Run tests
         run: pytest -v
