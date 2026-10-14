@@ -76,8 +76,11 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
         headers = Headers(response.headers.multi_items())
         headers.pop("Content-Encoding", None)
-        headers['total_bandwidth'] = sum([response.download_size, response.upload_size])
-
+        # upstream == requests_size (headers + body); downstream == header_size + download_size
+        headers['total_bandwidth'] = response.download_size + response.header_size + response.request_size # everything sent and received
+        headers['download_size'] = response.download_size + response.header_size # everything received (status line, headers, body)
+        
+        
         respcls = responsetypes.from_args(
             headers=headers,
             url=response.url,
