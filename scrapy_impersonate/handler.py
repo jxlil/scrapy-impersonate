@@ -76,6 +76,14 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
         headers = Headers(response.headers.multi_items())
         headers.pop("Content-Encoding", None)
+        # Sizes as reported by libcurl, i.e. what actually went over the wire, unlike
+        # downloader/*_bytes, which DownloaderStats rebuilds from the decoded Response.
+        request_bytes = response.request_size
+        response_bytes = response.header_size + response.download_size
+        self._crawler.stats.inc_value("impersonate/request_bytes", request_bytes)
+        self._crawler.stats.inc_value("impersonate/response_bytes", response_bytes)
+        request.meta["impersonate_request_bytes"] = request_bytes
+        request.meta["impersonate_response_bytes"] = response_bytes
 
         respcls = responsetypes.from_args(
             headers=headers,
