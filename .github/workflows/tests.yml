@@ -57,7 +57,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           pip install -e .
-          pip install curl-cffi==0.15.0 scrapy==${{ matrix.scrapy-version }}
+          pip install curl-cffi==0.17.0 scrapy==${{ matrix.scrapy-version }}
 
       - name: Run tests
         run: pytest -v
