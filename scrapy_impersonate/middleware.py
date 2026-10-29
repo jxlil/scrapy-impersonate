@@ -19,6 +19,6 @@ class RandomBrowserMiddleware:
     def from_crawler(cls, crawler):
         return cls(crawler.settings)
 
-    def process_request(self, request, spider):
+    def process_request(self, request, spider = None):
         browser = random.choice(self.browsers)
         request.meta["impersonate"] = browser
