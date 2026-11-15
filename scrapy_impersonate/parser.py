@@ -88,18 +88,6 @@ class RequestParser:
         return dict(headers)
 
     @property
-    def cookies(self) -> dict:
-        cookies = self._request.cookies
-        if isinstance(cookies, list):
-            return {k: v for cookie in cookies for k, v in cookie.items()}
-
-        elif isinstance(cookies, dict):
-            return {k: v for k, v in cookies.items()}
-
-        else:
-            return {}
-
-    @property
     def allow_redirects(self) -> bool:
         # Prevent curl_cffi from doing redirects, these should be handled by Scrapy
         return False

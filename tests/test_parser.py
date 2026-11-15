@@ -117,18 +117,12 @@ class TestRequestParser:
 
         assert RequestParser(request).as_dict()["headers"]["X-Custom"] == "value"
 
-    @pytest.mark.parametrize(
-        "cookies, expected",
-        [
-            ({"a": "1", "b": "2"}, {"a": "1", "b": "2"}),
-            ([{"a": "1"}, {"b": "2"}], {"a": "1", "b": "2"}),
-            (None, {}),
-        ],
-    )
-    def test_cookies(self, cookies, expected):
-        request = make_request(cookies=cookies)
+    def test_request_cookies_are_left_to_the_cookies_middleware(self):
+        request = make_request(
+            cookies=[{"name": "sid", "value": "secret", "domain": "other.example"}]
+        )
 
-        assert RequestParser(request).as_dict()["cookies"] == expected
+        assert "cookies" not in RequestParser(request).as_dict()
 
     def test_impersonate_args_override_defaults(self):
         request = make_request(
