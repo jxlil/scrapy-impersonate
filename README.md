@@ -90,6 +90,8 @@ yield scrapy.Request(
 )
 ```
 
+`DOWNLOAD_TIMEOUT` (or the `download_timeout` meta key) is applied as curl_cffi's `timeout`. A `timeout` in `impersonate_args` takes precedence.
+
 Some arguments worth knowing about:
 
 | Argument | Description |
