@@ -24,15 +24,19 @@ class CurlOptionsParser:
             return
 
         proxy = self.request.meta.get("proxy", "")
-        if proxy.startswith(("http://", "https://")):
-            proxy_auth_header = [b"Proxy-Authorization: " + proxy_auth[0]]
-            self.curl_options[CurlOpt.PROXYHEADER] = proxy_auth_header
-
-        elif proxy.startswith(("socks5h://", "socks5://", "socks4://")):
-            # For SOCKS5 proxy authentication, we need to extract the username and password
+        is_basic = proxy_auth[0].lower().startswith(b"basic ")
+        if proxy.startswith(("socks5h://", "socks5://", "socks4://")) or (
+            is_basic and proxy.startswith(("http://", "https://"))
+        ):
+            # Passed as username/password rather than a raw header so libcurl won't
+            # reuse a pooled proxy connection that was opened with other credentials.
             username, password = base64.b64decode(proxy_auth[0].split(b" ")[1]).split(b":")
             self.curl_options[CurlOpt.PROXYUSERNAME] = username
             self.curl_options[CurlOpt.PROXYPASSWORD] = password
+
+        elif proxy.startswith(("http://", "https://")):
+            proxy_auth_header = [b"Proxy-Authorization: " + proxy_auth[0]]
+            self.curl_options[CurlOpt.PROXYHEADER] = proxy_auth_header
 
     def _set_custom_options(self):
         """Add support for raw libcurl options set through request.meta"""

@@ -14,7 +14,7 @@ def make_request(**kwargs) -> Request:
 
 
 class TestCurlOptionsParser:
-    def test_http_proxy_auth_moves_to_proxy_header(self):
+    def test_http_proxy_basic_auth_moves_to_proxy_credentials(self):
         request = make_request(
             meta={"impersonate": "chrome", "proxy": "http://proxy.example:8080"},
             headers={"Proxy-Authorization": "Basic dXNlcjpwYXNz"},
@@ -22,8 +22,20 @@ class TestCurlOptionsParser:
 
         curl_options = CurlOptionsParser(request).as_dict()
 
-        assert curl_options[CurlOpt.PROXYHEADER] == [b"Proxy-Authorization: Basic dXNlcjpwYXNz"]
+        assert curl_options[CurlOpt.PROXYUSERNAME] == b"user"
+        assert curl_options[CurlOpt.PROXYPASSWORD] == b"pass"
+        assert CurlOpt.PROXYHEADER not in curl_options
         assert b"Proxy-Authorization" not in request.headers
+
+    def test_http_proxy_other_auth_moves_to_proxy_header(self):
+        request = make_request(
+            meta={"impersonate": "chrome", "proxy": "http://proxy.example:8080"},
+            headers={"Proxy-Authorization": "Bearer token"},
+        )
+
+        curl_options = CurlOptionsParser(request).as_dict()
+
+        assert curl_options[CurlOpt.PROXYHEADER] == [b"Proxy-Authorization: Bearer token"]
 
     @pytest.mark.parametrize("scheme", ["socks5h", "socks5", "socks4"])
     def test_socks_proxy_auth_moves_to_proxy_credentials(self, scheme):

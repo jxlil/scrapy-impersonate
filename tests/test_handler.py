@@ -2,6 +2,7 @@ import json
 
 import pytest
 from curl_cffi import CurlOpt
+from curl_cffi.requests.exceptions import RequestException
 from scrapy.core.downloader.handlers import DownloadHandlers
 from scrapy.http.request import Request
 from scrapy.spiders import Spider
@@ -75,6 +76,13 @@ async def test_curl_options_set_the_header_order(handler, http_server):
     assert list(echoed(response)["headers"])[:3] == ["host", "accept", "user-agent"]
 
 
+async def test_connection_is_reused(handler, http_server):
+    first = await download(handler, Request(http_server.url, meta={"impersonate": "chrome"}))
+    second = await download(handler, Request(http_server.url, meta={"impersonate": "chrome"}))
+
+    assert echoed(first)["client_port"] == echoed(second)["client_port"]
+
+
 @pytest.mark.filterwarnings("error::scrapy.exceptions.ScrapyDeprecationWarning")
 async def test_request_is_downloaded_through_scrapy_dispatch(http_server):
     """Regression test for https://github.com/jxlil/scrapy-impersonate/issues/55
@@ -141,3 +149,16 @@ class TestProxyAuthorization:
         assert request_through_proxy.headers.get(b"Proxy-Authorization") == (
             PROXY_CREDENTIALS.encode()
         )
+
+    async def test_tunnel_is_not_reused_with_other_credentials(
+        self, handler, proxy_server, request_through_proxy
+    ):
+        await download(handler, request_through_proxy)
+        other = request_through_proxy.replace(
+            headers={"Proxy-Authorization": "Basic b3RoZXI6b3RoZXI="}  # other:other
+        )
+
+        with pytest.raises(RequestException):
+            await download(handler, other)
+
+        assert proxy_server.proxy_authorization == "Basic b3RoZXI6b3RoZXI="

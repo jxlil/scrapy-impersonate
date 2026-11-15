@@ -67,6 +67,7 @@ class EchoHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         payload = {
             "path": self.path,
+            "client_port": self.client_address[1],
             "headers": {name.lower(): value for name, value in self.headers.items()},
         }
         body = json.dumps(payload).encode()
