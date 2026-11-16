@@ -96,6 +96,7 @@ Some arguments worth knowing about:
 | --- | --- |
 | `http_version` | Set to `"v3"` to use HTTP/3. Targets with an HTTP/3 fingerprint are marked in the table below |
 | `doh_url` | Resolve DNS over HTTPS instead of using the system resolver (`curl_cffi >= 0.16.0`) |
+| `dns` | DNS server address, or list of addresses, to resolve with instead of the system resolver. Requires a `curl_cffi` build with c-ares (`curl_cffi >= 0.17.0`) |
 | `interface` | Bind the request to a network interface or local source address |
 | `extra_fp` | Fine-tune fingerprint details on top of the impersonated browser |
 
@@ -124,7 +125,7 @@ yield scrapy.Request(
 
 ## Supported browsers
 
-The following browsers can be impersonated (`curl_cffi >= 0.15.0`):
+The following browsers can be impersonated (`curl_cffi >= 0.17.0`):
 
 | Browser | Version | OS | Name | HTTP/3 |
 | --- | --- | --- | --- | --- |
@@ -147,6 +148,11 @@ The following browsers can be impersonated (`curl_cffi >= 0.15.0`):
 | ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_24x24.png "Chrome") | 142 | macOS Tahoe | `chrome142` | |
 | ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_24x24.png "Chrome") | 145 | macOS Tahoe | `chrome145` | ✅ |
 | ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_24x24.png "Chrome") | 146 | macOS Tahoe | `chrome146` | ✅ |
+| ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_24x24.png "Chrome") | 150 | macOS Tahoe | `chrome150` | ✅ |
+| ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_24x24.png "Chrome") | 151 | Windows 10 | `chrome151` | ✅ |
+| ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_24x24.png "Chrome") | 151 | macOS 26.0 | `chrome151_macos` | ✅ |
+| ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_24x24.png "Chrome") | 152 | Windows 10 | `chrome152` | ✅ |
+| ![Chrome](https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_24x24.png "Chrome") | 152 | macOS 26.0 | `chrome152_macos` | ✅ |
 | ![Edge](https://raw.githubusercontent.com/alrra/browser-logos/main/src/edge/edge_24x24.png "Edge") | 99 | Windows 10 | `edge99` | |
 | ![Edge](https://raw.githubusercontent.com/alrra/browser-logos/main/src/edge/edge_24x24.png "Edge") | 101 | Windows 10 | `edge101` | |
 | ![Safari](https://github.com/alrra/browser-logos/blob/main/src/safari/safari_24x24.png "Safari") | 15.3 | macOS Big Sur | `safari153` | |
@@ -160,16 +166,21 @@ The following browsers can be impersonated (`curl_cffi >= 0.15.0`):
 | ![Safari](https://github.com/alrra/browser-logos/blob/main/src/safari/safari_24x24.png "Safari") | 26.0 | macOS Tahoe | `safari260` | |
 | ![Safari](https://github.com/alrra/browser-logos/blob/main/src/safari/safari_24x24.png "Safari") | 26.0 | iOS 26.0 | `safari260_ios` | |
 | ![Safari](https://github.com/alrra/browser-logos/blob/main/src/safari/safari_24x24.png "Safari") | 26.0.1 | macOS Tahoe | `safari2601` | |
+| ![Safari](https://github.com/alrra/browser-logos/blob/main/src/safari/safari_24x24.png "Safari") | 27.0 | macOS 27.0 | `safari270` | ✅ |
+| ![Safari](https://github.com/alrra/browser-logos/blob/main/src/safari/safari_24x24.png "Safari") | 27.0 | iOS 27.0 | `safari270_ios` | ✅ |
 | ![Firefox](https://github.com/alrra/browser-logos/blob/main/src/firefox/firefox_24x24.png "Firefox") | 133.0 | macOS Sonoma | `firefox133` | |
 | ![Firefox](https://github.com/alrra/browser-logos/blob/main/src/firefox/firefox_24x24.png "Firefox") | 135.0 | macOS Sonoma | `firefox135` | |
 | ![Firefox](https://github.com/alrra/browser-logos/blob/main/src/firefox/firefox_24x24.png "Firefox") | 144.0 | macOS Tahoe | `firefox144` | |
 | ![Firefox](https://github.com/alrra/browser-logos/blob/main/src/firefox/firefox_24x24.png "Firefox") | 147.0 | macOS Tahoe | `firefox147` | ✅ |
+| ![Firefox](https://github.com/alrra/browser-logos/blob/main/src/firefox/firefox_24x24.png "Firefox") | 153.0 | Windows 10 | `firefox153` | |
+| ![Firefox](https://github.com/alrra/browser-logos/blob/main/src/firefox/firefox_24x24.png "Firefox") | 154.0 | Windows 10 | `firefox154` | |
+| ![Firefox](https://github.com/alrra/browser-logos/blob/main/src/firefox/firefox_24x24.png "Firefox") | 155.0 | Windows 10 | `firefox155` | |
 | ![Tor](https://github.com/alrra/browser-logos/blob/main/src/tor/tor_24x24.png "Tor") | 14.5 | macOS Sonoma | `tor145` | |
 
 <sub>Notes:
 
 1. The old Safari target names (`safari15_3`, `safari15_5`, `safari17_0`, `safari17_2_ios`, `safari18_0`, `safari18_0_ios`) are kept as deprecated aliases. Prefer the new names (`safari153`, `safari155`, …) for new code.
-2. You can also pass a floating value like `impersonate="chrome"`, `"safari"`, `"safari_ios"` or `"firefox"` to let `curl_cffi` pick the most recent fingerprint without pinning a version.
+2. You can also pass a floating value like `impersonate="chrome"`, `"safari"`, `"safari_ios"` or `"firefox"` to let `curl_cffi` pick the most recent fingerprint without pinning a version. `"chrome"` resolves to the Windows profile (`chrome152`); use the `_macos` targets for Chrome on macOS.
 3. `RandomBrowserMiddleware` rotates across `chrome`, `firefox`, `safari`, `edge` and `tor` by default. Override with `IMPERSONATE_BROWSERS` to narrow the set (e.g. `IMPERSONATE_BROWSERS = ["chrome", "firefox"]`).
 </sub>
 
