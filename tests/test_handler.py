@@ -75,6 +75,47 @@ async def test_curl_options_set_the_header_order(handler, http_server):
     assert list(echoed(response)["headers"])[:3] == ["host", "accept", "user-agent"]
 
 
+async def test_tls_handshake_size_is_tracked(handler, https_server):
+    request = Request(
+        https_server.url,
+        meta={"impersonate": "chrome", "impersonate_args": {"verify": False}},
+    )
+
+    await download(handler, request)
+
+    size = request.meta["tls_total_handshake_size"]
+    # at least the ClientHello and the server's certificate
+    assert size > 2000
+    assert handler._crawler.stats.get_value("impersonate/tls_handshake_bytes") == size
+
+
+async def test_tls_handshake_size_is_zero_without_tls(handler, http_server):
+    request = Request(http_server.url, meta={"impersonate": "chrome"})
+
+    await download(handler, request)
+
+    assert request.meta["tls_total_handshake_size"] == 0
+
+
+async def test_tls_handshake_size_keeps_the_user_debug_function(handler, https_server):
+    received = []
+    request = Request(
+        https_server.url,
+        meta={
+            "impersonate": "chrome",
+            "impersonate_args": {"verify": False},
+            "impersonate_curl_options": {
+                "DEBUGFUNCTION": lambda type_, data: received.append(type_)
+            },
+        },
+    )
+
+    await download(handler, request)
+
+    assert received
+    assert request.meta["tls_total_handshake_size"] > 0
+
+
 @pytest.mark.filterwarnings("error::scrapy.exceptions.ScrapyDeprecationWarning")
 async def test_request_is_downloaded_through_scrapy_dispatch(http_server):
     """Regression test for https://github.com/jxlil/scrapy-impersonate/issues/55

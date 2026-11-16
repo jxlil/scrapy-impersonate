@@ -122,6 +122,12 @@ yield scrapy.Request(
 )
 ```
 
+### tls-handshake-size
+
+Every request downloaded through the handler gets `request.meta["tls_total_handshake_size"]`: the bytes the TLS handshake took on the wire, both directions, counting whole TLS records (record framing and encryption overhead included) and the server's NewSessionTicket messages. It is `0` for plain HTTP. The total across the crawl is kept in the `impersonate/tls_handshake_bytes` stat.
+
+It is measured through libcurl's debug callback, so `VERBOSE` is always enabled; a `DEBUGFUNCTION` set through `impersonate_curl_options` is still called.
+
 
 ## Supported browsers
 

@@ -2,6 +2,7 @@ import inspect
 import time
 from typing import Type, TypeVar
 
+from curl_cffi import CurlOpt
 from curl_cffi.requests import AsyncSession
 from scrapy.core.downloader.handlers.http11 import (
     HTTP11DownloadHandler as HTTPDownloadHandler,
@@ -16,7 +17,8 @@ from scrapy.utils.defer import deferred_f_from_coro_f
 from scrapy.utils.reactor import verify_installed_reactor
 from twisted.internet.defer import Deferred
 
-from scrapy_impersonate.parser import CurlOptionsParser, RequestParser
+from scrapy_impersonate.parser import CurlOptionsParser, RequestParser, CurlOpt
+from scrapy_impersonate.tls import TLSHandshakeCounter
 
 ImpersonateHandler = TypeVar("ImpersonateHandler", bound="ImpersonateDownloadHandler")
 
@@ -67,6 +69,13 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
         # are not sent to the target server by RequestParser.
         request_copy = request.copy()
         curl_options = CurlOptionsParser(request_copy).as_dict()
+        # a debug function set through impersonate_curl_options keeps being called
+        user_debug_function = curl_options.get(CurlOpt.DEBUGFUNCTION)
+        tls_handshake = TLSHandshakeCounter(
+            user_debug_function if callable(user_debug_function) else None
+        )
+        curl_options[CurlOpt.VERBOSE] = 1
+        curl_options[CurlOpt.DEBUGFUNCTION] = tls_handshake
 
         async with AsyncSession(max_clients=1, curl_options=curl_options) as client:
             request_args = RequestParser(request_copy).as_dict()
@@ -84,6 +93,9 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
         self._crawler.stats.inc_value("impersonate/response_bytes", response_bytes)
         request.meta["impersonate_request_bytes"] = request_bytes
         request.meta["impersonate_response_bytes"] = response_bytes
+        # Not part of the above: libcurl leaves the TLS layer out of its sizes.
+        self._crawler.stats.inc_value("impersonate/tls_handshake_bytes", tls_handshake.size)
+        request.meta["tls_total_handshake_size"] = tls_handshake.size
 
         respcls = responsetypes.from_args(
             headers=headers,
