@@ -17,7 +17,7 @@ from scrapy.utils.defer import deferred_f_from_coro_f
 from scrapy.utils.reactor import verify_installed_reactor
 from twisted.internet.defer import Deferred
 
-from scrapy_impersonate.parser import CurlOptionsParser, RequestParser, CurlOpt
+from scrapy_impersonate.parser import CurlOptionsParser, RequestParser
 from scrapy_impersonate.tls import TLSHandshakeCounter
 
 ImpersonateHandler = TypeVar("ImpersonateHandler", bound="ImpersonateDownloadHandler")
@@ -95,7 +95,7 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
         request.meta["impersonate_response_bytes"] = response_bytes
         # Not part of the above: libcurl leaves the TLS layer out of its sizes.
         self._crawler.stats.inc_value("impersonate/tls_handshake_bytes", tls_handshake.size)
-        request.meta["tls_total_handshake_size"] = tls_handshake.size
+        request.meta["tls_total_handshake_size_bytes"] = tls_handshake.size
 
         respcls = responsetypes.from_args(
             headers=headers,
