@@ -27,6 +27,18 @@ class TestCurlOptionsParser:
         assert CurlOpt.PROXYHEADER not in curl_options
         assert b"Proxy-Authorization" not in request.headers
 
+    def test_http_proxy_basic_auth_password_may_contain_colons(self):
+        credentials = base64.b64encode(b"user:pa:ss").decode()
+        request = make_request(
+            meta={"impersonate": "chrome", "proxy": "http://proxy.example:8080"},
+            headers={"Proxy-Authorization": f"Basic {credentials}"},
+        )
+
+        curl_options = CurlOptionsParser(request).as_dict()
+
+        assert curl_options[CurlOpt.PROXYUSERNAME] == b"user"
+        assert curl_options[CurlOpt.PROXYPASSWORD] == b"pa:ss"
+
     def test_http_proxy_other_auth_moves_to_proxy_header(self):
         request = make_request(
             meta={"impersonate": "chrome", "proxy": "http://proxy.example:8080"},

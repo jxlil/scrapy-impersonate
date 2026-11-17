@@ -30,7 +30,9 @@ class CurlOptionsParser:
         ):
             # Passed as username/password rather than a raw header so libcurl won't
             # reuse a pooled proxy connection that was opened with other credentials.
-            username, password = base64.b64decode(proxy_auth[0].split(b" ")[1]).split(b":")
+            # the password may contain ":", the username can't (RFC 7617)
+            credentials = base64.b64decode(proxy_auth[0].split(b" ")[1])
+            username, password = credentials.split(b":", 1)
             self.curl_options[CurlOpt.PROXYUSERNAME] = username
             self.curl_options[CurlOpt.PROXYPASSWORD] = password
 
