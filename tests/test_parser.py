@@ -8,7 +8,7 @@ from scrapy_impersonate.parser import CurlOptionsParser, RequestParser
 
 
 def make_request(**kwargs) -> Request:
-    kwargs.setdefault("url", "https://example.org")
+    kwargs.setdefault("url", "https://example.org/")
     kwargs.setdefault("meta", {}).setdefault("impersonate", "chrome")
     return Request(**kwargs)
 
@@ -100,7 +100,7 @@ class TestRequestParser:
         request_args = RequestParser(request).as_dict()
 
         assert request_args["method"] == "POST"
-        assert request_args["url"] == "https://example.org"
+        assert request_args["url"] == "https://example.org/"
         assert request_args["data"] == b"payload"
         assert request_args["impersonate"] == "chrome"
 
