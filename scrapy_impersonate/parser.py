@@ -84,8 +84,15 @@ class RequestParser:
 
     @property
     def headers(self) -> dict:
-        headers = self._request.headers.to_unicode_dict()
-        return dict(headers)
+        # Same as Headers.to_unicode_dict(), deprecated in Scrapy 2.20; to_tuple_list()
+        # isn't available on the minimum supported Scrapy.
+        headers = self._request.headers
+        return {
+            key.decode(headers.encoding, errors="replace"): b",".join(values).decode(
+                headers.encoding, errors="replace"
+            )
+            for key, values in headers.items()
+        }
 
     @property
     def allow_redirects(self) -> bool:
