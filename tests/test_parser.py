@@ -139,3 +139,22 @@ class TestRequestParser:
 
         assert request_args["timeout"] == 5
         assert request_args["verify"] is False
+
+    def test_download_timeout_is_forwarded(self):
+        request = make_request(meta={"impersonate": "chrome", "download_timeout": 15})
+
+        assert RequestParser(request).as_dict()["timeout"] == 15
+
+    def test_no_timeout_without_download_timeout(self):
+        assert "timeout" not in RequestParser(make_request()).as_dict()
+
+    def test_impersonate_args_timeout_wins_over_download_timeout(self):
+        request = make_request(
+            meta={
+                "impersonate": "chrome",
+                "download_timeout": 15,
+                "impersonate_args": {"timeout": 5},
+            }
+        )
+
+        assert RequestParser(request).as_dict()["timeout"] == 5

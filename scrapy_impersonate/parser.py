@@ -119,5 +119,9 @@ class RequestParser:
             if isinstance(method, property)
         }
 
+        # Not a property: curl_cffi treats timeout=None as "no timeout", not as its default
+        if "download_timeout" in self._request.meta:
+            request_args["timeout"] = self._request.meta["download_timeout"]
+
         request_args.update(self._impersonate_args)
         return request_args
