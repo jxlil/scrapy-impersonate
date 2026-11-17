@@ -83,6 +83,19 @@ async def test_connection_is_reused(handler, http_server):
     assert echoed(first)["client_port"] == echoed(second)["client_port"]
 
 
+async def test_request_cookies_are_not_sent_by_the_handler(handler, http_server):
+    """Cookies are CookiesMiddleware's job, it drops this one as it's for another domain."""
+    request = Request(
+        http_server.url,
+        meta={"impersonate": "chrome"},
+        cookies=[{"name": "sid", "value": "secret", "domain": "other.example"}],
+    )
+
+    response = await download(handler, request)
+
+    assert "cookie" not in echoed(response)["headers"]
+
+
 @pytest.mark.filterwarnings("error::scrapy.exceptions.ScrapyDeprecationWarning")
 async def test_request_is_downloaded_through_scrapy_dispatch(http_server):
     """Regression test for https://github.com/jxlil/scrapy-impersonate/issues/55

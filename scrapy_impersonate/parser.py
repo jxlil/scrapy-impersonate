@@ -88,20 +88,15 @@ class RequestParser:
 
     @property
     def headers(self) -> dict:
-        headers = self._request.headers.to_unicode_dict()
-        return dict(headers)
-
-    @property
-    def cookies(self) -> dict:
-        cookies = self._request.cookies
-        if isinstance(cookies, list):
-            return {k: v for cookie in cookies for k, v in cookie.items()}
-
-        elif isinstance(cookies, dict):
-            return {k: v for k, v in cookies.items()}
-
-        else:
-            return {}
+        # Same as Headers.to_unicode_dict(), deprecated in Scrapy 2.20; to_tuple_list()
+        # isn't available on the minimum supported Scrapy.
+        headers = self._request.headers
+        return {
+            key.decode(headers.encoding, errors="replace"): b",".join(values).decode(
+                headers.encoding, errors="replace"
+            )
+            for key, values in headers.items()
+        }
 
     @property
     def allow_redirects(self) -> bool:
@@ -122,6 +117,10 @@ class RequestParser:
             for property_name, method in self.__class__.__dict__.items()
             if isinstance(method, property)
         }
+
+        # Not a property: curl_cffi treats timeout=None as "no timeout", not as its default
+        if "download_timeout" in self._request.meta:
+            request_args["timeout"] = self._request.meta["download_timeout"]
 
         request_args.update(self._impersonate_args)
         return request_args
