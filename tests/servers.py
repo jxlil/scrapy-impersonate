@@ -67,6 +67,8 @@ class EchoHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         payload = {
             "path": self.path,
+            "client_port": self.client_address[1],
+            "tls_session_reused": getattr(self.connection, "session_reused", None),
             "headers": {name.lower(): value for name, value in self.headers.items()},
         }
         body = json.dumps(payload).encode()

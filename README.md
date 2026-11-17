@@ -124,6 +124,12 @@ yield scrapy.Request(
 )
 ```
 
+### connection-reuse
+
+Open connections are kept and reused by later requests to the same host with the same `impersonate` target and proxy, which saves the TCP and TLS handshakes. TLS sessions are never resumed, so a server can't link requests sent through different proxies.
+
+With `Basic` proxy credentials, a connection is only reused with the same credentials. Other `Proxy-Authorization` schemes are sent as a raw header, which libcurl ignores when picking a connection; if you rotate those, set `"FORBID_REUSE": 1` in `impersonate_curl_options` to close each connection after its request.
+
 
 ## Supported browsers
 

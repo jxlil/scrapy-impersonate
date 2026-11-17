@@ -2,6 +2,7 @@ import inspect
 import time
 from typing import Type, TypeVar
 
+from curl_cffi import CurlShare
 from curl_cffi.requests import AsyncSession
 from scrapy.core.downloader.handlers.http11 import (
     HTTP11DownloadHandler as HTTPDownloadHandler,
@@ -38,6 +39,12 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
         verify_installed_reactor("twisted.internet.asyncioreactor.AsyncioSelectorReactor")
 
+        # Each request still gets its own session (see #10), but they share the connection
+        # and DNS caches. Sharing connections is fine here, it's all one thread.
+        # The TLS session cache is left out: libcurl would resume a session through a
+        # different proxy, letting the server link requests sent from different IPs.
+        self._curl_share = CurlShare(connect=True, ssl_session=False)
+
     @classmethod
     def from_crawler(cls: Type[ImpersonateHandler], crawler: Crawler) -> ImpersonateHandler:
         return cls(crawler)
@@ -61,6 +68,18 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
                 return deferred_f_from_coro_f(self._download_request)(request)
             return super().download_request(request, spider)  # type: ignore[call-arg]
 
+    if ASYNC_HANDLER_API:
+
+        async def close(self) -> None:
+            self._curl_share.close()
+            await super().close()
+
+    else:
+
+        def close(self) -> "Deferred[None]":  # type: ignore[override]
+            self._curl_share.close()
+            return super().close()
+
     async def _download_request(self, request: Request) -> Response:
         # Work on a copy so CurlOptionsParser (which pops headers) does not mutate
         # the original request, and so those popped headers (e.g. Proxy-Authorization)
@@ -68,7 +87,9 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
         request_copy = request.copy()
         curl_options = CurlOptionsParser(request_copy).as_dict()
 
-        async with AsyncSession(max_clients=1, curl_options=curl_options) as client:
+        async with AsyncSession(
+            max_clients=1, curl_options=curl_options, curl_share=self._curl_share
+        ) as client:
             request_args = RequestParser(request_copy).as_dict()
             start_time = time.time()
             response = await client.request(**request_args)
