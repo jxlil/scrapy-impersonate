@@ -83,6 +83,23 @@ async def test_connection_is_reused(handler, http_server):
     assert echoed(first)["client_port"] == echoed(second)["client_port"]
 
 
+async def test_tls_session_is_not_resumed_through_another_proxy(
+    handler, https_server, proxy_server
+):
+    """A resumed session would let the server link requests made from different IPs."""
+
+    def request(**meta):
+        meta.update(impersonate="chrome", impersonate_args={"verify": False})
+        meta["impersonate_curl_options"] = {"FRESH_CONNECT": 1}  # force a new handshake
+        headers = {"Proxy-Authorization": PROXY_CREDENTIALS} if "proxy" in meta else {}
+        return Request(https_server.url, meta=meta, headers=headers)
+
+    await download(handler, request())
+    response = await download(handler, request(proxy=proxy_server.url))
+
+    assert echoed(response)["tls_session_reused"] is False
+
+
 async def test_request_cookies_are_not_sent_by_the_handler(handler, http_server):
     """Cookies are CookiesMiddleware's job, it drops this one as it's for another domain."""
     request = Request(

@@ -39,9 +39,11 @@ class ImpersonateDownloadHandler(HTTPDownloadHandler):
 
         verify_installed_reactor("twisted.internet.asyncioreactor.AsyncioSelectorReactor")
 
-        # Each request still gets its own session (see #10), but they share the connection,
-        # DNS and TLS session caches. Sharing connections is fine here, it's all one thread.
-        self._curl_share = CurlShare(connect=True)
+        # Each request still gets its own session (see #10), but they share the connection
+        # and DNS caches. Sharing connections is fine here, it's all one thread.
+        # The TLS session cache is left out: libcurl would resume a session through a
+        # different proxy, letting the server link requests sent from different IPs.
+        self._curl_share = CurlShare(connect=True, ssl_session=False)
 
     @classmethod
     def from_crawler(cls: Type[ImpersonateHandler], crawler: Crawler) -> ImpersonateHandler:
